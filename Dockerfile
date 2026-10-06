@@ -17,9 +17,6 @@ ENV COMPOSER_ALLOW_SUPERUSER 1
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --no-progress --no-interaction
-
 COPY . /var/www/html
 RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
 

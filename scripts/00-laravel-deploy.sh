@@ -4,7 +4,7 @@ set -e
 cd /var/www/html
 
 echo "==> Running composer"
-composer install --no-dev --working-dir=/var/www/html --optimize-autoloader
+composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 echo "==> Caching config..."
 php artisan config:cache
