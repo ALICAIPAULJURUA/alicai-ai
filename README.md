@@ -102,6 +102,48 @@ Upload the project, run `composer install`, copy `.env.example` to `.env`
 `OPENROUTER_API_KEY`, and point the document root (or a `.htaccess`
 subfolder) at `public/`.
 
+## Deployment to Render
+
+Render hosts this app as a Docker container (`Dockerfile` + `scripts/00-laravel-deploy.sh`). Its storage is **ephemeral**: the container's filesystem is rebuilt from the image on every deploy, so nothing written to `storage/storage` persists between deploys. That is exactly what this app wants — it stores no chat history, no uploads, and no session data on disk.
+
+### Prerequisites
+
+- The repo pushed to GitHub (`https://github.com/ALICAIPAULJURUA/alicai-ai`).
+- A [Render](https://render.com) account.
+
+### Create the service
+
+1. New → **Web Service** → connect `ALICAIPAULJURUA/alicai-ai`.
+2. Name: `alicai-ai`.
+3. Language: **Docker**.
+4. Branch: `main`.
+5. Region: closest to your users (e.g. Frankfurt or Oregon).
+6. Instance type: **Free**.
+7. Build Command: leave **blank**.
+8. Start Command: leave **blank**.
+
+### Environment variables
+
+Set these in Render's dashboard (Settings → Environment):
+
+| Key | Value |
+|-----|-------|
+| `APP_ENV` | `production` |
+| `APP_DEBUG` | `false` |
+| `APP_KEY` | output of `php artisan key:generate --show` |
+| `APP_URL` | your Render URL, e.g. `https://alicai-ai.onrender.com` |
+| `LOG_CHANNEL` | `stderr` |
+| `OPENROUTER_API_KEY` | your real key (never commit it) |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` |
+| `AI_MODEL` | `openrouter/auto` (or a specific model id) |
+
+### Notes
+
+- **Free tier spin-down:** the service sleeps after ~15 minutes of inactivity. The first request after waking may take 30–60 seconds — expected on the free plan.
+- **Auto-deploys:** push to `main` and Render redeploys automatically.
+- **Custom domain:** optional, via Settings → Custom Domains.
+- **Logs:** `LOG_CHANNEL=stderr` sends Laravel logs to the Render log stream. Chat message payloads are never logged.
+
 ## Screenshot
 
 ![Chat UI](docs/screenshot.png)
