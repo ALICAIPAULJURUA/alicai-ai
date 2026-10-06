@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+->withExceptions(function (Exceptions $exceptions): void {
+        // Intentionally empty: validation exceptions use Laravel's default handler,
+        // which does NOT dump the request body (including the `messages` payload)
+        // into logs. Do not add custom exception logging here.
     })->create();

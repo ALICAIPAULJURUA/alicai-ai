@@ -22,6 +22,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Privacy note
+    |--------------------------------------------------------------------------
+    |
+    | Laravel does not log HTTP request bodies by default, and this application
+    | must never do so: chat message payloads must never reach any log, file,
+    | database, or analytics channel. Do not add request-logging middleware or
+    | a "MessageFormatter" that captures the `messages` payload.
+    |
+    |--------------------------------------------------------------------------
     | Deprecations Log Channel
     |--------------------------------------------------------------------------
     |
