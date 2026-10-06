@@ -142,6 +142,10 @@ Set these in Render's dashboard (Settings → Environment):
 - **Free tier spin-down:** the service sleeps after ~15 minutes of inactivity. The first request after waking may take 30–60 seconds — expected on the free plan.
 - **Auto-deploys:** push to `main` and Render redeploys automatically.
 - **Custom domain:** optional, via Settings → Custom Domains.
+- **No database needed:** this app uses none; the image sets `CACHE_STORE=array` and
+  `SESSION_DRIVER=array` internally (in-memory, ephemeral — fine for rate limiting).
+- **Routing:** nginx is configured to hand every URL to Laravel (`PHP_CATCHALL`), so `/`,
+  `/api/chat`, and `/api/health` all reach the app.
 - **Logs:** `LOG_CHANNEL=stderr` sends Laravel logs to the Render log stream. Chat message payloads are never logged.
 
 ## Screenshot
