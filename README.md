@@ -1,59 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Alicai Paul Jurua — Personal AI
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Personal AI assistant for Alicai Paul Jurua.
 
-## About Laravel
+## What it does
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+A single-page chat app, scoped strictly to Alicai Paul Jurua. The AI answers
+only from a server-side knowledge base and politely declines anything outside
+that scope. All configuration — API key, model, persona, knowledge base — stays
+on the backend. The browser is a dumb terminal: no secrets are ever sent to the
+client, and **no chat history is stored anywhere** (not in a database, not in
+files, not in logs). Conversations live only in the browser tab's memory and
+are gone on reload.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.2+
+- Composer
 
-## Learning Laravel
+## Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```
+git clone https://github.com/ALICAIPAULJURUA/alicai-ai.git
+cd alicai-ai
+composer install
+cp .env.example .env
+php artisan key:generate
+# edit .env and set OPENROUTER_API_KEY
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Open http://127.0.0.1:8000 in your browser.
 
-## Laravel Sponsors
+## Updating the knowledge base
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Edit `resources/knowledge/alicai.md`, commit, and deploy. The file is read on
+every request, so no redeploy/cache flush is needed on the server — just
+replace the file and the assistant's knowledge changes immediately.
 
-### Premium Partners
+> The current `resources/knowledge/alicai.md` ships as a **draft placeholder**.
+> Replace it with the full knowledge base document before deploying.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Configuration
 
-## Contributing
+Application behavior lives in `config/ai.php`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Key | Description | Default |
+|-----|-------------|---------|
+| `model` | Model id sent to OpenRouter (`AI_MODEL` in `.env`) | `openrouter/auto` |
+| `temperature` | Sampling temperature | `0.5` |
+| `max_messages` | Max messages allowed per request | `20` |
+| `max_message_length` | Max characters per message | `4000` |
+| `knowledge_base` | Path to the knowledge Markdown file | `resources/knowledge/alicai.md` |
+| `system_prompt` | Fixed prompt with `{KNOWLEDGE_BASE}` placeholder | — |
 
-## Code of Conduct
+Environment keys: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL`, `AI_MODEL`.
+`OPENROUTER_API_KEY` is never exposed to the frontend.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Privacy
 
-## Security Vulnerabilities
+- No chat history is stored. No accounts, no cookies, no analytics, no tracking.
+- Chat message payloads are never written to any log, file, or database.
+- Laravel request logging does not capture request bodies (verified in
+  `config/logging.php`).
+- OpenRouter may log requests per their own policy; this is disclosed in the
+  app's "About" panel.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Deployment
+
+### VPS (Nginx + PHP-FPM)
+
+1. Clone the repo on the server and run `composer install --no-dev --optimize-autoloader`.
+2. Copy `.env.example` to `.env`, run `php artisan key:generate` and set a real `OPENROUTER_API_KEY`.
+3. Point Nginx's `root` at `public/` and hand non-static requests to FPM, e.g.:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/alicai-ai/public;
+
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+    }
+}
+```
+
+4. Run `php artisan config:cache`, `php artisan route:cache` and restart FPM.
+   (Omit the caches if you edit `config/ai.php` on the server.)
+
+### Shared hosting
+
+Upload the project, run `composer install`, copy `.env.example` to `.env`
+(replace the DB entries if the host requires them), set the app key and
+`OPENROUTER_API_KEY`, and point the document root (or a `.htaccess`
+subfolder) at `public/`.
+
+## Screenshot
+
+![Chat UI](docs/screenshot.png)
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT (unless the owner specifies otherwise).
